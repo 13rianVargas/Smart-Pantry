@@ -1,0 +1,63 @@
+Para tu portfolio, necesitas algo que demuestre que puedes resolver un problema cotidiano con una arquitectura robusta. Teniendo en cuenta que manejas **Spring Boot, Angular y MongoDB**, una idea excelente, ingeniosa y muy útil es un **"Smart Pantry & Waste Tracker" (Gestor Inteligente de Despensa y Desperdicios)**.
+
+A diferencia de un simple inventario, este proyecto se enfoca en la **sostenibilidad y el ahorro**, algo muy valorado hoy en día.
+
+---
+
+## 1. El Concepto: Smart Pantry
+
+La aplicación permite gestionar los productos de tu cocina, pero con un giro: utiliza algoritmos sencillos para priorizar qué debes cocinar hoy basándose en las fechas de vencimiento y el costo de los productos.
+
+### Funcionalidades Clave:
+
+* **Gestión de Stock:** CRUD de productos con categorías y fechas de vencimiento.
+* **Semáforo de Prioridad:** El Frontend (Angular) muestra en rojo los productos que vencen en menos de 48h.
+* **Calculadora de "Valor en Riesgo":** El Backend (Spring) calcula cuánto dinero perderías si esos productos se vencen.
+* **Exportación de Lista de Compras:** Genera un PDF o texto con lo que falta según un stock mínimo definido.
+
+---
+
+## 2. Arquitectura Técnica
+
+Para que brille en tu portfolio, estructuraremos el proyecto de forma profesional:
+
+### **Frontend (Angular)**
+
+* Usa **Angular Material** para una interfaz limpia y profesional.
+* Implementa **Guards** para proteger rutas y un **Interceptor** para manejar errores de API globalmente.
+* **Reactive Forms** para la entrada de productos con validaciones en tiempo real.
+
+### **Backend (Spring Boot)**
+
+* **Spring Data MongoDB:** Para persistencia flexible (perfecto para productos con diferentes atributos).
+* **Modelado:** Usa `@Document` para definir tus entidades.
+* **Lógica de Negocio:** Crea un `Service` que procese las fechas de vencimiento usando la API de `java.time`.
+
+### **Base de Datos (MongoDB)**
+
+* Ideal para este caso porque los productos de despensa no siempre tienen los mismos datos (algunos tienen peso, otros unidades, otros volumen).
+
+---
+
+## 3. El Toque Maestro: Dockerización
+
+Aquí es donde demuestras nivel Senior. No solo entregarás el código, sino un entorno listo para producción.
+
+Crea un archivo `docker-compose.yml` en la raíz que orqueste tres contenedores:
+
+1. **`client`**: La app de Angular servida por un servidor Nginx.
+2. **`api`**: Tu JAR de Spring Boot.
+3. **`db`**: Una imagen oficial de MongoDB.
+
+> **Tip de experto:** Configura las **Variables de Entorno** en el `docker-compose` para que el backend se conecte a la base de datos usando el nombre del servicio (`mongodb://db:27017/pantry`) en lugar de `localhost`. Esto demuestra que entiendes la resolución de nombres en redes de Docker.
+
+---
+
+## 4. Por qué esto ayuda a tu Portfolio
+
+* **Fullstack Real:** Conectas Angular con Spring de forma asíncrona.
+* **Dominio de NoSQL:** Muestras que sabes cuándo usar Mongo sobre SQL.
+* **DevOps Básico:** El uso de Docker indica que sabes desplegar aplicaciones, no solo escribirlas.
+* **Ingenio:** No es la típica lista de tareas (To-Do list); tiene un propósito de ahorro y ecología.
+
+¿Te gustaría que te ayude a diseñar la estructura inicial del `docker-compose.yml` o prefieres empezar por el modelado de datos en Spring?¸

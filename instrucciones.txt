@@ -1,0 +1,664 @@
+================================================================================
+SMART PANTRY & WASTE TRACKER - GUÍA COMPLETA DE DESARROLLO
+================================================================================
+Proyecto Fullstack: Angular + Spring Boot + MongoDB + Docker
+Fecha de Inicio: 3 de febrero de 2026
+Objetivo: Crear una aplicación profesional para gestionar despensa y minimizar desperdicios
+
+================================================================================
+FASE 0: CONFIGURACIÓN INICIAL Y SETUP DEL PROYECTO
+================================================================================
+
+[x] 0.1 - Preparar estructura de directorios
+    - Crear carpeta raíz del proyecto
+    - Crear carpeta /frontend para Angular
+    - Crear carpeta /backend para Spring Boot
+    - Crear carpeta /docker para configuraciones de Docker
+    - Crear archivo docker-compose.yml en la raíz
+
+[ ] 0.2 - Inicializar repositorio Git
+    - git init en la raíz del proyecto
+    - Crear .gitignore apropiado (incluir node_modules, target, .env, etc.)
+    - Primer commit: "Initial project setup"
+
+[ ] 0.3 - Crear archivo README.md
+    - Descripción del proyecto
+    - Requisitos previos (Node.js, Java 11+, MongoDB, Docker)
+    - Instrucciones de instalación local
+    - Instrucciones para ejecutar con Docker
+
+[ ] 0.4 - Documentar variables de entorno
+    - Crear archivo .env.example en la raíz
+    - Documentar todas las variables necesarias (puertos, URLs, credenciales DB)
+
+================================================================================
+FASE 1: DESARROLLO DEL BACKEND (SPRING BOOT)
+================================================================================
+
+[ ] 1.1 - Crear proyecto Spring Boot base
+    - Usar Spring Initializr para generar proyecto con:
+      * Spring Boot 3.x
+      * Spring Data MongoDB
+      * Spring Web (REST API)
+      * Spring Security (opcional pero recomendado)
+      * Lombok (para reducir boilerplate)
+      * Maven como build tool
+    - Guardar en carpeta /backend
+
+[ ] 1.2 - Configurar conexión a MongoDB
+    - Editar application.properties/yml
+    - Configurar URI de MongoDB: mongodb://db:27017/pantry (para Docker)
+    - Añadir propiedades de logging para desarrollo
+    - Crear archivo de configuración separado para test y producción
+
+[ ] 1.3 - Modelar Entidades (Domain Layer)
+    - Crear clase Product:
+      * id (ObjectId de MongoDB)
+      * nombre (String)
+      * categoría (String: Frutas, Verduras, Lácteos, etc.)
+      * fechaVencimiento (LocalDate)
+      * costo (BigDecimal)
+      * cantidad (Integer)
+      * unidad (String: kg, litros, unidades)
+      * fechaAgregado (LocalDateTime)
+      * notas (String)
+      * estado (enum: ACTIVO, VENCIDO, CONSUMIDO)
+    - Añadir anotaciones @Document y @Id
+
+[ ] 1.4 - Crear Repository Layer
+    - Crear interfaz ProductRepository extends MongoRepository<Product, String>
+    - Añadir métodos personalizados:
+      * findByEstado(Estado estado)
+      * findByFechaVencimientoBefore(LocalDate fecha)
+      * findByCategoria(String categoria)
+      * findByFechaVencimientoBetween(LocalDate inicio, LocalDate fin)
+
+[ ] 1.5 - Implementar Service Layer (Lógica de Negocio)
+    - Crear ProductService con métodos:
+      * CRUD básico (crear, leer, actualizar, eliminar producto)
+      * obtenerProductosPorVencer() - productos que vencen en <48h
+      * calcularValorEnRiesgo() - suma del costo de productos a vencer
+      * obtenerProductosVencidos() - productos ya expirados
+      * agruparPorCategoria() - GET /api/products/by-category
+      * obtenerListaCompras(stockMínimo) - productos bajo stock
+
+[ ] 1.6 - Crear REST Controllers
+    - Crear ProductController:
+      * GET /api/products - listar todos los productos
+      * GET /api/products/:id - obtener un producto
+      * POST /api/products - crear producto
+      * PUT /api/products/:id - actualizar producto
+      * DELETE /api/products/:id - eliminar producto
+      * GET /api/products/priority/urgent - productos venciendo
+      * GET /api/products/value/at-risk - valor en riesgo
+      * GET /api/products/by-category - agrupados por categoría
+      * GET /api/products/shopping-list - generar lista compra
+
+[ ] 1.7 - Implementar manejo de excepciones global
+    - Crear GlobalExceptionHandler con @ControllerAdvice
+    - Manejar ProductNotFoundException
+    - Manejar validaciones de entrada
+    - Retornar respuestas HTTP con mensajes claros
+
+[ ] 1.8 - Validación de datos en el Backend
+    - Usar anotaciones @NotNull, @NotBlank, @Positive, etc.
+    - Validar que fechas de vencimiento sean futuras
+    - Validar que cantidad sea positiva
+    - Crear validadores personalizados si es necesario
+
+[ ] 1.9 - Configurar CORS
+    - Permitir solicitudes desde http://localhost:4200 (Angular dev)
+    - Permitir desde frontend en producción (configurar en docker-compose)
+
+[ ] 1.10 - Pruebas unitarias del Backend
+    - Test para ProductService (lógica de negocio)
+    - Test para ProductController (endpoints)
+    - Test para ProductRepository (queries MongoDB)
+    - Usar JUnit 5 + Mockito
+    - Objetivo: >80% code coverage
+
+[ ] 1.11 - Documentación API (Swagger/OpenAPI)
+    - Añadir dependencia springdoc-openapi-ui
+    - Anotaciones @Operation, @ApiResponse en controllers
+    - Accesible en http://localhost:8080/swagger-ui.html
+
+================================================================================
+FASE 2: DESARROLLO DEL FRONTEND (ANGULAR)
+================================================================================
+
+[ ] 2.1 - Crear proyecto Angular
+    - ng new smart-pantry-client --routing --skip-git
+    - Guardar en carpeta /frontend
+    - Usar Angular 15+
+
+[ ] 2.2 - Instalar dependencias principales
+    - Angular Material: ng add @angular/material
+    - HttpClientModule para conectar con API
+    - RxJS para programación reactiva
+    - TypeScript versión compatible
+
+[ ] 2.3 - Configurar módulos base
+    - Importar HttpClientModule en AppModule
+    - Importar BrowserAnimationsModule para Material
+    - Configurar AppModule y AppComponent
+
+[ ] 2.4 - Modelar tipos TypeScript (Models)
+    - Crear interfaz Product:
+      * id: string
+      * nombre: string
+      * categoría: string
+      * fechaVencimiento: Date
+      * costo: number
+      * cantidad: number
+      * unidad: string
+      * fechaAgregado: Date
+      * notas: string
+      * estado: 'ACTIVO' | 'VENCIDO' | 'CONSUMIDO'
+
+[ ] 2.5 - Crear servicio API
+    - Crear ProductService (inyectable)
+    - Métodos para conectar con cada endpoint del backend
+    - Usar HttpClient para GET, POST, PUT, DELETE
+    - Manejar observables con RxJS (map, catchError, finalize)
+
+[ ] 2.6 - Crear Interceptor de errores global
+    - Interceptar todas las requests HTTP
+    - Manejar errores comunes (401, 404, 500)
+    - Mostrar notificaciones al usuario
+    - Implementar retry lógica para ciertos errores
+
+[ ] 2.7 - Crear Guards de rutas
+    - CanActivate para proteger rutas
+    - CanDeactivate para advertir cambios sin guardar (si aplica)
+
+[ ] 2.8 - Diseñar componentes principales
+    - ProductListComponent - tabla de productos con filtros
+    - ProductDetailComponent - ver detalles de un producto
+    - ProductFormComponent - crear/editar producto
+    - PriorityAlertComponent - mostrar productos venciendo
+    - CategoryGroupComponent - agrupar por categoría
+    - ShoppingListComponent - generar lista de compra
+    - DashboardComponent - vista general con métricas
+
+[ ] 2.9 - Implementar ProductListComponent
+    - Tabla con columnas: nombre, categoría, vencimiento, costo, acciones
+    - Filtros por categoría, estado, rango de vencimiento
+    - Búsqueda por nombre
+    - Paginación (Angular Material Table con MatPaginator)
+    - Botones para editar/eliminar productos
+
+[ ] 2.10 - Implementar ProductFormComponent
+    - Reactive Forms para crear/editar
+    - Validaciones en tiempo real
+    - Campos: nombre, categoría, fechaVencimiento, costo, cantidad, unidad, notas
+    - Mensajes de error claros bajo cada campo
+    - Botones Guardar/Cancelar
+
+[ ] 2.11 - Implementar DashboardComponent
+    - Card mostrando "Valor en Riesgo" con icono de alerta (rojo)
+    - Card mostrando "Productos a vencer en 48h" con contador
+    - Card mostrando "Productos vencidos" con contador
+    - Card mostrando "Stock total" en valores monetarios
+    - Gráficos (opcional): distribución por categoría usando ngx-charts
+
+[ ] 2.12 - Implementar PriorityAlertComponent
+    - Lista de productos que vencen en <48h
+    - Mostrado con fondo ROJO o naranja
+    - Ordenado por fecha de vencimiento ascendente
+    - Icono de alerta y nombre del producto prominente
+
+[ ] 2.13 - Implementar ShoppingListComponent
+    - Formulario para definir stock mínimo por categoría
+    - Botón para generar lista
+    - Mostrar productos que necesitan reorden
+    - Exportar a PDF o copiar al portapapeles (ClipboardModule)
+    - (Opcional) Generar PDF con pdfMake
+
+[ ] 2.14 - Crear layout principal (Navbar y Sidebar)
+    - Navbar con logo, título de la app, usuario (si aplica)
+    - Sidebar o nav con links a:
+      * Dashboard
+      * Productos
+      * Categorías (si aplica)
+      * Alertas de Vencimiento
+      * Lista de Compra
+      * Configuración
+    - Responsive para mobile con MatSidenav
+
+[ ] 2.15 - Implementar enrutamiento
+    - Configurar rutas principales en app-routing.module.ts
+    - /dashboard
+    - /products
+    - /products/new
+    - /products/:id
+    - /alerts
+    - /shopping-list
+    - Lazy loading de módulos si aplica
+    - Redirigir /home a /dashboard
+
+[ ] 2.16 - Crear notificaciones/toasts
+    - Usar MatSnackBar para mensajes de éxito/error
+    - Mostrar al crear, actualizar, eliminar productos
+    - Mostrar errores de conexión
+
+[ ] 2.17 - Temas y estilos Angular Material
+    - Crear tema personalizado (colores primario, acento, warn)
+    - Aplicar tema global en styles.scss
+    - Definir paleta de colores (rojo para alertas, verde para éxito)
+
+[ ] 2.18 - Testing Frontend
+    - Pruebas unitarias para servicios (Jasmine + Karma)
+    - Pruebas para componentes principales
+    - Objetivo: >70% code coverage
+
+================================================================================
+FASE 3: INTEGRACIÓN FRONTEND-BACKEND
+================================================================================
+
+[ ] 3.1 - Configurar ambiente de desarrollo
+    - Angular dev server en localhost:4200
+    - Spring Boot dev server en localhost:8080
+    - MongoDB corriendo localmente en localhost:27017
+
+[ ] 3.2 - Verificar CORS en Spring Boot
+    - Probar peticiones desde Angular a backend
+    - Ajustar WebMvcConfigurer si es necesario
+
+[ ] 3.3 - Crear flujo completo: crear producto
+    - Ir a /products/new
+    - Llenar formulario
+    - Enviar POST al backend
+    - Validar respuesta
+    - Redirigir a lista y mostrar notificación
+
+[ ] 3.4 - Crear flujo completo: listar productos
+    - Cargar lista en ProductListComponent
+    - Mostrar datos en tabla Material
+    - Implementar filtros
+    - Paginación funcional
+
+[ ] 3.5 - Crear flujo completo: actualizar producto
+    - Click en editar lleva a formulario pre-llenado
+    - PUT request al backend
+    - Actualiza lista automáticamente
+    - Notificación de éxito
+
+[ ] 3.6 - Crear flujo completo: eliminar producto
+    - Confirmar eliminación con dialog
+    - DELETE request
+    - Actualiza lista
+
+[ ] 3.7 - Crear flujo: ver alertas de vencimiento
+    - Dashboard muestra contador
+    - Click redirige a /alerts
+    - Muestra lista con fondo rojo
+    - Información útil: días para vencer, costo
+
+[ ] 3.8 - Crear flujo: valor en riesgo
+    - Backend calcula suma de productos venciendo
+    - Frontend lo muestra en Dashboard prominentemente
+    - Formato monetario clara
+
+[ ] 3.9 - Pruebas de integración E2E
+    - Usar Cypress o Protractor
+    - Escenarios completos: crear, leer, actualizar, eliminar
+    - Test con datos reales
+
+================================================================================
+FASE 4: BASE DE DATOS MONGODB
+================================================================================
+
+[ ] 4.1 - Verificar colección Products en MongoDB
+    - Conectar a MongoDB localmente o Atlas
+    - Crear base de datos "pantry"
+    - Crear colección "products"
+
+[ ] 4.2 - Crear índices en MongoDB
+    - Índice en fechaVencimiento (búsquedas rápidas)
+    - Índice en categoría
+    - Índice en estado
+    - Índice compound en estado + fechaVencimiento
+
+[ ] 4.3 - Poblar datos de ejemplo
+    - Crear script con 20-30 productos de ejemplo
+    - Incluir diferentes categorías
+    - Incluir productos a punto de vencer
+    - Incluir productos ya vencidos
+
+[ ] 4.4 - Documentar esquema de datos
+    - Crear archivo SCHEMA.md en /backend
+    - Documentar estructura de Product
+    - Ejemplos de documentos JSON
+    - Notas sobre campos opcionales
+
+================================================================================
+FASE 5: DOCKERIZACIÓN
+================================================================================
+
+[ ] 5.1 - Crear Dockerfile para Frontend (Angular)
+    - Ubicación: /docker/frontend.dockerfile o /frontend/Dockerfile
+    - Usar imagen node:18 para build
+    - Usar imagen nginx:alpine para servir
+    - Multi-stage build (build + production)
+    - Copiar dist/smart-pantry-client a /usr/share/nginx/html
+    - Exponer puerto 80 (o 4200 para desarrollo)
+
+[ ] 5.2 - Crear Dockerfile para Backend (Spring Boot)
+    - Ubicación: /docker/backend.dockerfile o /backend/Dockerfile
+    - Usar imagen openjdk:11 o java:latest
+    - Copiar JAR compilado
+    - Exponer puerto 8080
+    - Configurar variables de entorno para MongoDB
+
+[ ] 5.3 - Crear docker-compose.yml
+    - Servicio 'db' (MongoDB)
+      * imagen: mongo:5.0
+      * puerto: 27017
+      * volumen para persistencia: mongodb_data
+      * variables de entorno si aplica
+    - Servicio 'api' (Spring Boot)
+      * build desde /backend
+      * puerto: 8080:8080
+      * variables de entorno: SPRING_DATA_MONGODB_URI=mongodb://db:27017/pantry
+      * depends_on: db
+      * healthcheck opcional
+    - Servicio 'client' (Angular)
+      * build desde /frontend
+      * puerto: 80:80 (o 4200:4200)
+      * depends_on: api
+      * variables de entorno: API_URL=http://api:8080
+    - Networks: crear red 'smart-pantry-network' (explícita)
+    - Volumes: mongodb_data para persistencia de BD
+
+[ ] 5.4 - Configurar variables de entorno en docker-compose
+    - MONGODB_INITDB_ROOT_USERNAME (si aplica)
+    - MONGODB_INITDB_ROOT_PASSWORD (si aplica)
+    - SPRING_DATA_MONGODB_URI con nombre de servicio
+    - API_URL para el frontend
+
+[ ] 5.5 - Crear .dockerignore para cada servicio
+    - Frontend: node_modules, dist, .git, .env
+    - Backend: target, .git, .mvn, .env
+
+[ ] 5.6 - Configurar Nginx para Angular (producción)
+    - Crear nginx.conf en /docker/
+    - Configurar proxy reverso a API (localhost:8080 -> /api)
+    - Habilitar gzip compression
+    - Configurar caché para archivos estáticos
+    - Redirigir todas las rutas desconocidas a index.html (SPA)
+
+[ ] 5.7 - Testear docker-compose localmente
+    - docker-compose build
+    - docker-compose up
+    - Verificar que todos los servicios inician
+    - Testear en navegador http://localhost
+    - Verificar logs: docker-compose logs -f
+
+[ ] 5.8 - Documentar comando de ejecución
+    - Añadir al README.md:
+      * docker-compose up -d (background)
+      * docker-compose logs -f (ver logs)
+      * docker-compose down (detener)
+
+================================================================================
+FASE 6: TESTING Y ASEGURAMIENTO DE CALIDAD
+================================================================================
+
+[ ] 6.1 - Testing Backend Unit
+    - ProductServiceTest: >90% coverage
+    - ProductRepositoryTest (si tiene queries custom)
+    - ProductControllerTest: cada endpoint
+    - ExceptionHandlerTest
+    - Usar @DataMongoTest para tests de repository
+
+[ ] 6.2 - Testing Backend Integration
+    - Tests con BD embebida (TestContainers con MongoDB)
+    - Flujos completos: crear -> leer -> actualizar -> eliminar
+    - Validaciones de negocio
+
+[ ] 6.3 - Testing Frontend Unit
+    - ProductService test
+    - ProductListComponent test
+    - ProductFormComponent test
+    - Interceptor test
+    - Objetivo: >70% coverage
+
+[ ] 6.4 - Testing Frontend E2E
+    - Escenarios críticos con Cypress
+    - Crear producto e-2-e
+    - Ver alertas de vencimiento e-2-e
+    - Generar lista de compra e-2-e
+    - Mínimo 5 test cases críticos
+
+[ ] 6.5 - Validar cumplimiento de requisitos
+    - ¿Se puede crear/editar/eliminar productos? ✓
+    - ¿Se muestran alertas de productos venciendo <48h en rojo? ✓
+    - ¿Se calcula correctamente el valor en riesgo? ✓
+    - ¿Se genera lista de compra con stock mínimo? ✓
+    - ¿Interfaz Angular Material es profesional? ✓
+    - ¿Todo funciona en Docker? ✓
+
+[ ] 6.6 - Validar seguridad básica (OPCIONAL)
+    - Validación de entrada en Backend
+    - Sanitización en Frontend
+    - CORS configurado correctamente
+    - No guardar credenciales en código
+
+================================================================================
+FASE 7: DOCUMENTACIÓN
+================================================================================
+
+[ ] 7.1 - Actualizar README.md completo
+    - Descripción del proyecto
+    - Screenshots/GIFs de funcionalidades
+    - Requisitos previos
+    - Instalación local
+    - Instalación con Docker
+    - Estructura de directorios
+    - Endpoints API
+    - Tecnologías usadas
+
+[ ] 7.2 - Crear ARCHITECTURE.md
+    - Diagrama conceptual (Frontend - Backend - BD)
+    - Patrones de diseño usados (MVC, Repository, etc.)
+    - Flujo de datos
+    - Explicación de decisiones técnicas
+
+[ ] 7.3 - Crear BACKEND.md
+    - Estructura de carpetas
+    - Descripción de cada clase/servicio
+    - Cómo ejecutar tests
+    - Cómo generar JAR
+    - Endpoints documentados con ejemplos curl/Postman
+
+[ ] 7.4 - Crear FRONTEND.md
+    - Estructura de carpetas
+    - Descripción de componentes
+    - Cómo ejecutar tests
+    - Cómo hacer build
+    - Guía de estilo y componentes
+
+[ ] 7.5 - Crear DEPLOYMENT.md
+    - Cómo deployar en producción
+    - Configuración de variables de entorno
+    - Escalado horizontal
+    - Monitoreo recomendado
+    - Backups de MongoDB
+
+[ ] 7.6 - Crear CONTRIBUTING.md (si aplica)
+    - Guía para contribuidores
+    - Convenciones de código
+    - Proceso de pull requests
+    - Estándares de commits
+
+[ ] 7.7 - Generar Swagger/OpenAPI HTML
+    - Accesible en /api/swagger-ui.html
+    - Documentar en README cómo acceder
+    - Exportar especificación OpenAPI si aplica
+
+[ ] 7.8 - Crear diagrama ER/Modelo de datos
+    - Mostrar estructura de Product
+    - Relaciones si existen
+    - Guardar como imagen en carpeta /docs
+
+================================================================================
+FASE 8: OPTIMIZACIÓN Y PRODUCCIÓN
+================================================================================
+
+[ ] 8.1 - Optimizar Frontend
+    - Lazy loading de módulos (si aplica)
+    - Tree-shaking en build
+    - Minificación y obfuscación
+    - ng build --prod --optimization
+    - Eliminar console.log en producción
+
+[ ] 8.2 - Optimizar Backend
+    - Cambiar logging level a WARN en producción
+    - Configurar pool de conexiones a MongoDB
+    - Añadir caching si es necesario (Redis, opcional)
+    - Revisar queries N+1 en MongoDB
+
+[ ] 8.3 - Configuración de variables por entorno
+    - development, staging, production
+    - application-dev.yml, application-prod.yml
+    - environment.ts, environment.prod.ts
+
+[ ] 8.4 - Security hardening
+    - Validar TODOS los inputs
+    - Usar HTTPS en producción
+    - Implementar autenticación (Spring Security + JWT, opcional)
+    - Implementar autorización (solo usuario ve su despensa)
+    - CORS restringido solo a dominio de producción
+
+[ ] 8.5 - Performance monitoring
+    - Añadir métricas básicas con Micrometer
+    - Endpoint de health check: /actuator/health
+    - Logging estructurado (JSON logs para análisis)
+
+[ ] 8.6 - Configurar CI/CD (Opcional pero recomendado)
+    - GitHub Actions para test automáticos
+    - Build automático de Docker images
+    - Deploy automático a producción
+    - Crear .github/workflows
+
+================================================================================
+FASE 9: ENTREGA FINAL Y PORTFOLIO
+================================================================================
+
+[ ] 9.1 - Revisar código general
+    - Linter pass (ESLint para Angular, Checkstyle para Spring)
+    - Código limpio y bien formateado
+    - Nombres consistentes y claros
+    - Comentarios en lógica compleja
+
+[ ] 9.2 - Crear carpeta /docs
+    - Colocar todos los .md aquí
+    - Screenshots del proyecto en funcionamiento
+    - Diagrama de arquitectura (en PNG o SVG)
+
+[ ] 9.3 - Publicar en GitHub
+    - Push final a main/master
+    - Crear releases si aplica
+    - Añadir GitHub Pages con documentación (opcional)
+
+[ ] 9.4 - Crear archivo PORTFOLIO.md
+    - Explicar brevemente por qué este proyecto demuestra nivel Senior
+    - Listar tecnologías y patrones usados
+    - Enlace a GitHub repo
+    - Enlace a demo (si está hosteado)
+    - Puntos clave a mencionar en entrevistas
+
+[ ] 9.5 - Grabar video de demostración (Opcional)
+    - Demo de 2-3 minutos mostrando:
+      * Dashboard con métricas
+      * Crear un producto
+      * Ver alertas de vencimiento
+      * Generar lista de compra
+      * Todo funcionando en Docker
+    - Subir a YouTube o similar
+    - Enlazar en README
+
+[ ] 9.6 - Preparar presentación para entrevistas
+    - Explicar decisiones de arquitectura
+    - Por qué Spring Boot + Angular + MongoDB
+    - Cómo escalaría el proyecto
+    - Qué mejoraría si tuviera más tiempo
+
+[ ] 9.7 - Verificación final (Checklist)
+    [ ] Todo el código en GitHub
+    [ ] README claro y completo
+    [ ] Docker funciona: docker-compose up -d
+    [ ] Tests pasan al 100%
+    [ ] Documentación de APIs completa
+    [ ] Sin errores en consola (Browser + Server)
+    [ ] Responsive en mobile
+    [ ] Performance aceptable
+    [ ] Código sin hardcoded credentials
+
+================================================================================
+NOTAS ADICIONALES Y CONSEJOS
+================================================================================
+
+BUENAS PRÁCTICAS A SEGUIR:
+
+1. Commit frecuentes:
+   - Commit después de cada funcionalidad implementada
+   - Mensajes descriptivos en presente: "Add product delete endpoint"
+   - Evitar commits con muchos cambios
+
+2. Code Review:
+   - Revisar código antes de hacer merge
+   - Auto-revisar buscando bugs
+
+3. Testing:
+   - Test mientras desarrollas, no al final
+   - Usa TDD si es posible
+
+4. Versionado:
+   - Usar semantic versioning (v1.0.0)
+   - Documentar cambios en CHANGELOG.md
+
+5. Performance:
+   - Monitorear tiempo de respuesta de APIs
+   - Objetivo: <200ms para la mayoría de endpoints
+
+6. UX:
+   - Interfaz intuitiva
+   - Mensajes de error claros
+   - Loading spinners donde sea necesario
+   - Confirmaciones para acciones destructivas
+
+PROBLEMAS COMUNES Y SOLUCIONES:
+
+Problema: CORS error al conectar Angular -> Spring
+Solución: Revisar @CrossOrigin en controller o WebMvcConfigurer
+
+Problema: MongoDB no persiste datos entre docker-compose down/up
+Solución: Asegurar que los volumenes están configurados correctamente
+
+Problema: Angular llama localhost:8080 pero debería ir a nombre del servicio
+Solución: En docker-compose, angular debe usar http://api:8080
+
+Problema: Build lento de Docker
+Solución: Optimizar Dockerfile, usar .dockerignore, buildkit
+
+TIMELINE ESTIMADO (trabajando ~4 horas/día):
+
+- Fase 0: 1 día
+- Fase 1 (Backend): 5-7 días
+- Fase 2 (Frontend): 7-9 días
+- Fase 3 (Integración): 2-3 días
+- Fase 4 (BD): 1 día
+- Fase 5 (Docker): 2-3 días
+- Fase 6 (Testing): 3-4 días
+- Fase 7 (Documentación): 2 días
+- Fase 8-9 (Optimización y entrega): 2-3 días
+
+TOTAL ESTIMADO: 4-5 semanas
+
+================================================================================
+FIN DE INSTRUCCIONES
+================================================================================
+
+Última actualización: 3 de febrero de 2026
+Estado actual: FASE 0 - Configuración Inicial (Comenzar aquí)

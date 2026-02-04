@@ -1,0 +1,4 @@
+version: "3.8"
+
+services:
+  # Los servicios se añadirán en la Fase 5
