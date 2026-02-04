@@ -16,12 +16,12 @@ FASE 0: CONFIGURACIÓN INICIAL Y SETUP DEL PROYECTO
     - Crear carpeta /docker para configuraciones de Docker
     - Crear archivo docker-compose.yml en la raíz
 
-[ ] 0.2 - Inicializar repositorio Git
+[x] 0.2 - Inicializar repositorio Git
     - git init en la raíz del proyecto
     - Crear .gitignore apropiado (incluir node_modules, target, .env, etc.)
     - Primer commit: "Initial project setup"
 
-[ ] 0.3 - Crear archivo README.md
+[x] 0.3 - Crear archivo README.md
     - Descripción del proyecto
     - Requisitos previos (Node.js, Java 11+, MongoDB, Docker)
     - Instrucciones de instalación local
