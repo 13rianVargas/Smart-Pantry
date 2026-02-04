@@ -27,7 +27,7 @@ FASE 0: CONFIGURACIÓN INICIAL Y SETUP DEL PROYECTO
     - Instrucciones de instalación local
     - Instrucciones para ejecutar con Docker
 
-[ ] 0.4 - Documentar variables de entorno
+[x] 0.4 - Documentar variables de entorno
     - Crear archivo .env.example en la raíz
     - Documentar todas las variables necesarias (puertos, URLs, credenciales DB)
 
